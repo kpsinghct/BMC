@@ -7,7 +7,7 @@
  * req.options .
 * @author KP Singh Chundawat <kpsinghct@gmail.com>
 * @version 0.0.0
-* @copyright Blackroot Technologies Pvt. Ltd
+* @copyright KP Singh Chundawat
 */
 function parse(dt, val) {
     switch (dt) {
@@ -35,34 +35,73 @@ module.exports.queryBuilder = function (req, res, next) {
         req.options.select = req.query.select.replace(/,/g, ' ');
     }
     if (req.query.where) {
-        var whr = req.query.where.split(',');
-        whr.forEach(function (item) {
-            var splitedstring = item.split(';');
-            if (splitedstring[1].startsWith('$')) {
-                //split again with *
-                var conditn = splitedstring[1].split('*');
-                var key = splitedstring[0];
-                req.options.where[key] = {};
-                conditn.forEach(function (citem) {
-                    var cdata = citem.split('|');
-                    try {
-                        req.options.where[key][cdata[0]] = parse(cdata[1], cdata[2]);
-                    }
-                    catch (e) {
-                        console.log(e);
-                    }
+        if (req.query.where == 'defaulter') {
+            req.options.where['nextemiDate'] ={'$lte':new Date()} ;
+        }
+        else if (req.query.where == 'duplicateaadhar') {
+            req.options.where['duplicateaadhar'] = 'duplicateaadhar';
+        }
+         else if (req.query.where == 'withoutaadhar') {
+            req.options.where['aadharno'] = null;
+        }
+        else {
+            var whr = req.query.where.split(',');
+            whr.forEach(function (item) {
+                var splitedstring = item.split(';');
+                 if (splitedstring[1].startsWith("$in")) {
+                if (splitedstring[0].startsWith('"')) {
+                    splitedstring[0] = splitedstring[0].slice(1)
+                }
+                var keysss = splitedstring[0];
+                splitedstring[0] = keysss.replace("\'", "");
 
-                });
-
+                splitedstring[1] = splitedstring[1].replace('\"', "");
+                console.log(splitedstring[1])
+                var splitaggrigatecommand = splitedstring[1].split(':');
+                var aggrigateValue = splitaggrigatecommand[1].split('|');
+                //console.log(aggrigateValue);
+                req.options.where[splitedstring[0]] = { '$in': aggrigateValue };
+                return;
             }
-            else if (splitedstring[1] != 'undefined')
-                req.options.where[splitedstring[0]] = splitedstring[1];
-        });
+                if (splitedstring[1].startsWith('$') && !splitedstring[1].startsWith("$in")) {
+                    //split again with *
+                    var conditn = splitedstring[1].split('*');
+                    var key = splitedstring[0];
+                    req.options.where[key] = {};
+                    conditn.forEach(function (citem) {
+                        var cdata = citem.split('|');
+                        try {
+                            req.options.where[key][cdata[0]] = parse(cdata[1], cdata[2]);
+                        }
+                        catch (e) {
+                            console.log(e);
+                        }
+
+                    });
+
+                }
+                else if (splitedstring[1] != 'undefined')
+                    req.options.where[splitedstring[0]] = splitedstring[1];
+            });
+        }
+
     }
 
     if (req.query.sort) {
         //remove comma with space
-        req.options.sort = req.query.sort.replace(/,/g, ' ');
+        console.log('fuck');
+        if (req.query.where != 'defaulter' && req.query.where != 'duplicateaadhar') {
+            req.options.sort = req.query.sort.replace(/,/g, ' ');
+            console.log('NBC');
+        }
+        else {
+            console.log('fuck');
+            delete req.options.sort;
+            req.options.sort = {};
+            req.options.sort = { '_id': 1 }
+            console.log('NBC',req.options.sort);
+
+        }
 
     }
     if (req.query.search) {

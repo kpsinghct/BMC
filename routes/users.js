@@ -2,7 +2,7 @@
 * @name routes.userroute
 * @author KP Singh Chundawat <kpsinghct@gmail.com>
 * @version 0.0.0
-* @copyright Blackroot Technologies Pvt. Ltd
+* @copyright KP Singh Chundawat
 */
 var authentication=require('../oauth/authorize');
 var express = require('express');

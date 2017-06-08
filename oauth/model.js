@@ -4,7 +4,7 @@
 * @description here I am not directly exporting function because oAuth internally using this(keyword) hence it will give 500.
 * @author KP Singh Chundawat <kpsinghct@gmail.com>
 * @version 0.0.0
-* @copyright Blackroot Technologies Pvt. Ltd
+* @copyright KP Singh Chundawat
 */
 
 var usermodel = require('../models/usermodel');
@@ -54,7 +54,7 @@ function grantTypeAllowed(clientId, grantType, cb) {
 
 function generateToken(type, req, cb) {
     if (req.user && req.user.hasOwnProperty('_doc')) {
-        usermodel.findById(req.user._id).populate('roles', ['name', 'permissions'],null,{'isactive':true}).execAsync().then(function (user) {
+        usermodel.findById(req.user._id).populate('ward').execAsync().then(function (user) {
             if (user) {
                 user.password='<RESTRICTED>'
                 var token = jwt.encode(user, pk, 'RS256');
@@ -81,7 +81,7 @@ function saveAccessToken(token, clientId, expires, userId, cb) {
 
 function getUser(username, password, cb, req) {
     password = crypto.createHash('sha1').update(password).digest('hex')
-    usermodel.findOneAsync({ username: username, password: password }).then(function (user) {
+    usermodel.findOneAsync({ username: username, password: password,isactive:true }).then(function (user) {
         cb(null, user);
     }).catch(function (err) {
         cb(err, null);

@@ -1,20 +1,14 @@
 'use strict'
 /**
-* @name models.usermodel
+* @name models.warmodel
 * @author KP Singh Chundawat <kpsinghct@gmail.com>
 * @version 0.0.0
 * @copyright KP Singh Chundawat
 */
 var mongoose = require('mongoose');
 var schema = mongoose.Schema;
-
-var usermodel = new schema({
+var wardmodel = new schema({
     name: { type: String, required: [true, 'name is required.'] },
-    username: { type: String, required: [true, 'username is required.'] },
-    password: { type: String, required: [true, "pssword is required."] },
-    role:{type: String, required: [true, 'role is required.']},
-    ward:[{type: schema.Types.ObjectId, ref: 'ward'}],
-    isfirstTimeLogin: { type: Boolean, default: true },
     isactive: { type: Boolean, default: true },
     createdby: { type: String, required: [true, 'createdby is required.'], default: 'SYSTEM' },
     createddate: { type: Date, default: Date.now },
@@ -23,7 +17,6 @@ var usermodel = new schema({
 });
 
 
-var user = mongoose.model('user', usermodel);
+var ward = mongoose.model('ward', wardmodel);
 
-
-module.exports = user;
+module.exports = ward;

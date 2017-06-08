@@ -3,7 +3,7 @@
 * @name oauth.authorize
 * @author KP Singh Chundawat <kpsinghct@gmail.com>
 * @version 0.0.0
-* @copyright Blackroot Technologies Pvt. Ltd
+* @copyright KP Singh Chundawat
 */
 
 var decode = require('./model').getAccessToken;
@@ -24,12 +24,16 @@ module.exports.authenticate = function (req, res, next) {
             }
 
             usermodel.findById(data.user._id).then(function (user) {
-                if (user) {
+                if (user && user.isactive == true) {
                     req.user = user;
                     next();
                     return;
                     // next();
                     // return;
+                }
+                else {
+                    res.status(401).json({ message: 'User deactiveted. Please contact your admininstrator.' });
+
                 }
             }).catch(function (err) {
                 if (err) {

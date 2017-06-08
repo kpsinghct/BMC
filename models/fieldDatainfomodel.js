@@ -3,13 +3,14 @@
 * @name models.fieldDatainfomodel
 * @author KP Singh Chundawat <kpsinghct@gmail.com>
 * @version 0.0.0
-* @copyright Blackroot Technologies Pvt. Ltd
+*@copyright KP Singh Chundawat
 */
 var mongoose = require('mongoose');
 var schema = mongoose.Schema;
 
 var fieldDatainfomodel = new schema({
     name: { type: String },
+    ward:{type: schema.Types.ObjectId, ref: 'ward'},
     customerzsn: { type: String },
     mobile: { type: String },
     aadharno: { type: String },

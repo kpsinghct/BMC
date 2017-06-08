@@ -3,7 +3,7 @@
  * @name oauth.index
 * @author KP Singh Chundawat <kpsinghct@gmail.com>
 * @version 0.0.0
-* @copyright Blackroot Technologies Pvt. Ltd
+* @copyright KP Singh Chundawat
  **/
 var oauthserver = require('oauth2-server');
 var model = require('./model');

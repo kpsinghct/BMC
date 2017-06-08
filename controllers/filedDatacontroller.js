@@ -3,42 +3,114 @@
 * @name controllers.fileddatacontrollers
 * @author KP Singh Chundawat <kpsinghct@gmail.com>
 * @version 0.0.0
-* @copyright Blackroot Technologies Pvt. Ltd
+* @copyright KP Singh Chundawat
 */
 
 var fileddatamodel = require('../models/fieldDatainfomodel');
 var emimodel = require('../models/emimodel');
 var error = require('../handler/error');
 var mongoose = require('mongoose');
+var _ = require('lodash');
 module.exports.get = function (req, res) {
-    fileddatamodel.find(req.options.where)
-        .$where(req.options.search).countAsync().then(function (total) {
-            fileddatamodel
-                .find(req.options.where)
-                .$where(req.options.search)
-                .sort(req.options.sort)
-                .skip(req.options.pageskip)
-                .limit(req.options.pagesize)
-                .execAsync().then(function (list) {
-                    var result = [{
-                        'total': total,
-                        'data': list
-                    }]
-
-                    res.status(200).json(result);
-                }).catch(function (err) {
-                    if (err) {
-                        return error.sendMongooseErrorMessage(err, res);
+    // var wardId = _.map(req.user.ward, '_id')
+    if (req.options.where && req.options.where['duplicateaadhar'] == "duplicateaadhar") {
+        fileddatamodel.aggregate([{
+            '$match': { 'aadharno': { "$exists": true, "$ne": null } }
+        }, {
+            '$group': {
+                '_id': { 'aadharno': '$aadharno' },  //$aadharno is the column name in collection
+                'count': { '$sum': 1 },
+                'id': { '$push': '$$ROOT' }
+            }
+        }, {
+            '$match': {
+                'count': { '$gt': 1 }
+            }
+        }
+        ]).execAsync().then(function (total) {
+            fileddatamodel.aggregate([
+                {
+                    '$match': {
+                        'aadharno': { "$exists": true, "$ne": null }
                     }
-                    return res.status(500).json('Oops!! Something went wrong.');
-
-                });
+                }, {
+                    "$lookup": {
+                        "from": "wards",
+                        "localField": "ward",
+                        "foreignField": "_id",
+                        "as": "ward"
+                    }
+                },
+                { '$unwind': '$ward' },
+                {
+                    '$group': {
+                        '_id': { 'aadharno': '$aadharno' },  //$aadharno is the column name in collection
+                        'count': { '$sum': 1 },
+                        'id': { '$push': '$$ROOT' }
+                    }
+                },
+                {
+                    '$match': {
+                        'count': { '$gt': 1 }
+                    }
+                },
+                { '$skip': req.options.pageskip },
+                { '$limit': req.options.pagesize }
+            ]).execAsync().then(function (list) {
+                var result = [];
+                var resultobj = {
+                    'total': 0,
+                    'data': []
+                }
+                if (list.length > 0) {
+                    resultobj.total = total[0].count;
+                    resultobj.data = list[0].id;
+                }
+                result.push(resultobj);
+                res.status(200).json(result);
+            }).catch(function (err) {
+                if (err) {
+                    return error.sendMongooseErrorMessage(err, res);
+                }
+                return res.status(500).json('Oops!! Something went wrong.');
+            });
         }).catch(function (err) {
             if (err) {
                 return error.sendMongooseErrorMessage(err, res);
             }
             return res.status(500).json('Oops!! Something went wrong.');
-        })
+        });
+    } else {
+        fileddatamodel.find(req.options.where)
+            .$where(req.options.search).countAsync().then(function (total) {
+                fileddatamodel
+                    .find(req.options.where)
+                    .$where(req.options.search)
+                    .sort(req.options.sort)
+                    .skip(req.options.pageskip)
+                    .limit(req.options.pagesize)
+                    .populate('ward', 'name')
+                    .execAsync().then(function (list) {
+                        var result = [{
+                            'total': total,
+                            'data': list
+                        }]
+                        res.status(200).json(result);
+                    }).catch(function (err) {
+                        if (err) {
+                            return error.sendMongooseErrorMessage(err, res);
+                        }
+                        return res.status(500).json('Oops!! Something went wrong.');
+
+                    });
+            }).catch(function (err) {
+                if (err) {
+                    return error.sendMongooseErrorMessage(err, res);
+                }
+                return res.status(500).json('Oops!! Something went wrong.');
+            });
+    }
+
 
 }
 
@@ -57,7 +129,7 @@ module.exports.getbyid = function (req, res) {
 module.exports.post = function (req, res) {
     req.body.createdby = req.user.username;
     req.body.modifiedby = req.user.username;
-    req.body.wardNumber=1;
+    /// req.body.wardNumber = 1;
     fileddatamodel.createAsync(req.body).then(function (filedData) {
         // if (req.body.isemi == true) {
         //     var months = []
@@ -92,18 +164,18 @@ module.exports.post = function (req, res) {
         //         });
         //         bb = bb - pre_dd.toFixed(2);
         //     }
-            // emimodel.createAsync(months).then(function (emidata) {
-            //   res.status(200).json(filedData);
+        // emimodel.createAsync(months).then(function (emidata) {
+        //   res.status(200).json(filedData);
 
-            // }).catch(function (errs) {
-            //     if (errs) {
-            //         return error.sendMongooseErrorMessage(errs, res);
-            //     }
-            //     res.status(500).json('Oops!! Something went wrong.');
-            // });
+        // }).catch(function (errs) {
+        //     if (errs) {
+        //         return error.sendMongooseErrorMessage(errs, res);
+        //     }
+        //     res.status(500).json('Oops!! Something went wrong.');
+        // });
         // }
         // else
-         res.status(200).json(filedData);
+        res.status(200).json(filedData);
     }).catch(function (err) {
         if (err) {
             return error.sendMongooseErrorMessage(err, res);
@@ -121,16 +193,28 @@ module.exports.put = function (req, res) {
                 res.status(404).json("No record(s) found.");
             }
             fileddata.name = req.body.name || fileddata.name;
+            fileddata.ward = req.body.ward || fileddata.ward;
             fileddata.customerzsn = req.body.customerzsn || fileddata.customerzsn;
             fileddata.mobile = req.body.mobile || fileddata.mobile;
-            fileddata.aadharno = req.body.aadharno || fileddata.aadharno;
+            if (req.body.aadharno)
+                fileddata.aadharno = req.body.aadharno;
+            else
+                fileddata.aadharno = null;
             fileddata.sssmid = req.body.sssmid || fileddata.sssmid;
             fileddata.dob = req.body.dob || fileddata.dob;
             fileddata.enrolledDate = req.body.enrolledDate || fileddata.enrolledDate;
             fileddata.adress = req.body.adress || fileddata.adress;
             fileddata.city = req.body.city || fileddata.city;
             fileddata.pin = req.body.pin || fileddata.pin;
+            if (fileddata.isemi && req.body.paidemi > fileddata.paidemi) {
+                var currentDate = new Date(fileddata.nextemiDate);
+                var differenc = req.body.paidemi - fileddata.paidemi;
+                var month = currentDate.getMonth() + differenc;
+                currentDate.setMonth(month);
+                fileddata.nextemiDate = currentDate;
+                fileddata.paidemi = req.body.paidemi || fileddata.paidemi;
 
+            }
             if (req.body.hasOwnProperty('isactive') && req.body.isactive == false) {
                 fileddata.isactive = false;
             }
