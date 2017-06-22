@@ -213,7 +213,14 @@ module.exports.put = function (req, res) {
                 currentDate.setMonth(month);
                 fileddata.nextemiDate = currentDate;
                 fileddata.paidemi = req.body.paidemi || fileddata.paidemi;
+                fileddata.emiType = req.body.emiType || fileddata.emiType;
 
+            }
+            if (fileddata.isrental==true) {
+             fileddata.tenantname=req.body.tenantname || fileddata.tenantname;
+             fileddata.tenantaadharnumber=req.body.tenantaadharnumber || fileddata.tenantaadharnumber;
+             fileddata.tenantmobilenumber=req.body.tenantmobilenumber || fileddata.tenantmobilenumber;
+             
             }
             if (req.body.hasOwnProperty('isactive') && req.body.isactive == false) {
                 fileddata.isactive = false;
