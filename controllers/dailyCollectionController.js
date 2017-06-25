@@ -6,18 +6,28 @@
 * @copyright KP Singh Chundawat
 */
 
-var wardmodel = require('../models/wardmodel');
+var dailycollectionmodel = require('../models/dailycollectionmodel');
+var fileddatamodel = require('../models/fieldDatainfomodel');
 var error = require('../handler/error');
 var mongoose = require('mongoose');
 module.exports.get = function (req, res) {
-    wardmodel.find(req.options.where)
+    dailycollectionmodel.find(req.options.where)
         .$where(req.options.search).countAsync().then(function (total) {
-            wardmodel
+            dailycollectionmodel
                 .find(req.options.where)
                 .$where(req.options.search)
                 .sort(req.options.sort)
                 .skip(req.options.pageskip)
                 .limit(req.options.pagesize)
+                .populate([{
+                    path: 'fieldId',
+                    model: 'filedDatainfo',
+                    populate: {
+                        path: 'ward',
+                        model: 'ward'
+                    }
+                }])
+                // .populate('fieldId.ward', '-__v')
                 .execAsync().then(function (list) {
                     var result = [{
                         'total': total,
@@ -46,10 +56,10 @@ module.exports.get = function (req, res) {
 }
 
 module.exports.getbyid = function (req, res) {
-    wardmodel
+    dailycollectionmodel
         .findById(req.params.id)
-        .then(function (user) {
-            if (!user) {
+        .then(function (collection) {
+            if (!collection) {
                 return res.json({
                     "statusCode": 404,
                     "message": "No record(s) found.",
@@ -58,7 +68,7 @@ module.exports.getbyid = function (req, res) {
             }
             return res.json({
                 "statusCode": 200,
-                "data": user
+                "data": collection
             });
         }).catch(function (err) {
             if (err) {
@@ -72,15 +82,93 @@ module.exports.getbyid = function (req, res) {
 }
 
 module.exports.post = function (req, res) {
-    req.body.modifiedby =req.user.username;
-    wardmodel.findOneAsync({ 'name': { $regex: req.body.name, $options: "i" } }).then(function (isward) {
-        if (!isward) {
-            wardmodel.createAsync(req.body).then(function (ward) {
-                return res.json({
-                    "statusCode": 201,
-                    "message": "ward was created successfully.",
-                    "data": ward
+    req.body.modifiedby = req.user.username;
+    req.body.createdby = req.user.username;
+    var fieldId = req.body.fieldId;
+    req.body.fieldId = mongoose.Types.ObjectId(req.body.fieldId);
+    dailycollectionmodel.createAsync(req.body).then(function (ward) {
+        fileddatamodel
+            .findByIdAsync(fieldId).then(function (fileddata) {
+                if (!fileddata) {
+                    res.status(404).json("No record(s) found.");
+                }
+
+                fileddata.paidemi = req.body.eminumber
+                fileddata.saveAsync().then(function (filedss) {
+                    return res.json({
+                        "statusCode": 201,
+                        "message": "collection details for customer submited successfully.",
+                        "data": ward
+                    });
+                }).catch(function (err) {
+                    if (err) {
+                        return error.sendMongooseErrorMessage(err, res);
+                    }
+                    return res.status(500).json('Oops!! Something went wrong.');
                 });
+            }).catch(function (rrr) {
+                if (err) {
+                    return error.sendMongooseErrorMessage(rrr, res);
+                }
+                return res.status(500).json('Oops!! Something went wrong.');
+            });
+
+    }).catch(function (err) {
+        if (err) {
+            return error.sendMongooseErrorMessage(err, res);
+        }
+        return res.json({
+            "statusCode": 500,
+            "message": "Oops!! Something went wrong."
+        });
+    });
+}
+
+module.exports.put = function (req, res) {
+    var id = mongoose.Types.ObjectId(req.params.id);
+    req.body.fieldId = mongoose.Types.ObjectId(req.body.fieldId);
+    dailycollectionmodel
+        .findByIdAsync(req.params.id).then(function (collection) {
+            if (!collection) {
+                return res.json({
+                    "statusCode": 404,
+                    "message": "No record(s) found.",
+                    "data": {}
+                });
+            }
+
+            collection.fieldId = req.body.fieldId || collection.fieldId;
+            collection.eminumber = req.body.eminumber || collection.eminumber;
+            collection.collectionamount = req.body.collectionamount || collection.collectionamount;
+            collection.modifiedby = req.body.modifiedby || collection.modifiedby;
+            collection.modifieddate = new Date();
+            collection.saveAsync().then(function (colletn) {
+                fileddatamodel
+                    .findByIdAsync(req.body.fieldId).then(function (fileddata) {
+                        if (!fileddata) {
+                            res.status(404).json("No record(s) found.");
+                        }
+
+                        fileddata.paidemi = req.body.eminumber
+                        fileddata.saveAsync().then(function (filedss) {
+                            return res.json({
+                                "statusCode": 200,
+                                "message": "collection details for customer updated sucessfully.",
+                                "data": colletn
+                            });
+                        }).catch(function (err) {
+                            if (err) {
+                                return error.sendMongooseErrorMessage(err, res);
+                            }
+                            return res.status(500).json('Oops!! Something went wrong.');
+                        });
+                    }).catch(function (rrr) {
+                        if (err) {
+                            return error.sendMongooseErrorMessage(rrr, res);
+                        }
+                        return res.status(500).json('Oops!! Something went wrong.');
+                    });
+
             }).catch(function (err) {
                 if (err) {
                     return error.sendMongooseErrorMessage(err, res);
@@ -89,92 +177,21 @@ module.exports.post = function (req, res) {
                     "statusCode": 500,
                     "message": "Oops!! Something went wrong."
                 });
+            })
+
+        }).catch(function (err) {
+            if (err) {
+                return error.sendMongooseErrorMessage(err, res);
+            }
+            return res.json({
+                "statusCode": 500,
+                "message": "Oops!! Something went wrong."
             });
-        }
-        else {
-            res.status(409).json('Oops! Ward already exist.');
-
-        }
-    }).catch(function (err) {
-        if (err) {
-            return error.sendMongooseErrorMessage(err, res);
-        }
-        return res.json({
-            "statusCode": 500,
-            "message": "Oops!! Something went wrong."
         });
-    });
-
-}
-
-module.exports.put = function (req, res) {
-    var id = mongoose.Types.ObjectId(req.params.id);
-    wardmodel.findOneAsync({ 'name': { $regex: req.body.name, $options: "i" }, '_id': { '$ne': id } }).then(function (isuser) {
-        if (!isuser) {
-            wardmodel
-                .findByIdAsync(req.params.id).then(function (ward) {
-                    if (!ward) {
-                        return res.json({
-                            "statusCode": 404,
-                            "message": "No record(s) found.",
-                            "data": {}
-                        });
-                    }
-
-                    ward.name = req.body.name || ward.name;
-
-                    if (req.body.hasOwnProperty('isactive') && req.body.isactive == false) {
-                        ward.isactive = false;
-                    }
-                    else {
-                        ward.isactive = req.body.isactive || ward.isactive;
-                    }
-                    ward.modifiedby = req.body.modifiedby || ward.modifiedby;
-                    ward.modifieddate = new Date();
-                    ward.saveAsync().then(function (wrd) {
-                        return res.json({
-                            "statusCode": 200,
-                            "message": "user was updated sucessfully.",
-                            "data": wrd
-                        });
-                    }).catch(function (err) {
-                        if (err) {
-                            return error.sendMongooseErrorMessage(err, res);
-                        }
-                        return res.json({
-                            "statusCode": 500,
-                            "message": "Oops!! Something went wrong."
-                        });
-                    })
-
-                }).catch(function (err) {
-                    if (err) {
-                        return error.sendMongooseErrorMessage(err, res);
-                    }
-                    return res.json({
-                        "statusCode": 500,
-                        "message": "Oops!! Something went wrong."
-                    });
-                });
-        }
-        else {
-            res.status(409).json('Oops! Ward already exist.');
-
-        }
-    }).catch(function (err) {
-        if (err) {
-            return error.sendMongooseErrorMessage(err, res);
-        }
-        return res.json({
-            "statusCode": 500,
-            "message": "Oops!! Something went wrong."
-        });
-    });
-
 }
 
 module.exports.deleted = function (req, res) {
-    wardmodel.findByIdAndRemoveAsync(req.params.id).then(function (ward) {
+    dailycollectionmodel.findByIdAndRemoveAsync(req.params.id).then(function (ward) {
         if (!ward) {
             return res.json({
                 "statusCode": 404,

@@ -115,8 +115,12 @@ module.exports.get = function (req, res) {
 }
 
 module.exports.getbyid = function (req, res) {
+    var id = mongoose.Types.ObjectId(req.params.id);
     fileddatamodel
-        .findByIdAsync(req.params.id).then(function (department) {
+        .findById(id)
+        .populate('ward', '-__v')
+        .execAsync()
+        .then(function (department) {
             res.status(200).json(department);
         }).catch(function (err) {
             if (err) {
@@ -206,21 +210,41 @@ module.exports.put = function (req, res) {
             fileddata.adress = req.body.adress || fileddata.adress;
             fileddata.city = req.body.city || fileddata.city;
             fileddata.pin = req.body.pin || fileddata.pin;
-            if (fileddata.isemi && req.body.paidemi > fileddata.paidemi) {
-                var currentDate = new Date(fileddata.nextemiDate);
-                var differenc = req.body.paidemi - fileddata.paidemi;
-                var month = currentDate.getMonth() + differenc;
-                currentDate.setMonth(month);
-                fileddata.nextemiDate = currentDate;
-                fileddata.paidemi = req.body.paidemi || fileddata.paidemi;
-                fileddata.emiType = req.body.emiType || fileddata.emiType;
+            if (fileddata.isemi == true) {
+                if (req.body.emitype == "1") {
+                    if (req.body.paidemi > fileddata.paidemi) {
+                        var currentDate = new Date(fileddata.nextemiDate);
+                        var differenc = req.body.paidemi - fileddata.paidemi;
+                        var month = currentDate.getMonth() + differenc;
+                        currentDate.setMonth(month);
+                        fileddata.nextemiDate = currentDate;
+                    }
 
+                    fileddata.bankename = req.body.bankename || fileddata.bankename;
+                    fileddata.branchname = req.body.branchname || fileddata.branchname;
+                    fileddata.branchcode = req.body.branchcode || fileddata.branchcode;
+                }
+                if (req.body.emitype == "2") {
+                    var currentDate = new Date(fileddata.nextemiDate);
+                    var differenc = req.body.paidemi - fileddata.paidemi;
+                    var nextDate = currentDate.getDate() + differenc;
+                    currentDate.setMonth(nextDate);
+                    fileddata.nextemiDate = currentDate;
+                }
+                fileddata.paidemi = req.body.paidemi || fileddata.paidemi;
+                fileddata.emitype = req.body.emitype || fileddata.emitype;
             }
-            if (fileddata.isrental==true) {
-             fileddata.tenantname=req.body.tenantname || fileddata.tenantname;
-             fileddata.tenantaadharnumber=req.body.tenantaadharnumber || fileddata.tenantaadharnumber;
-             fileddata.tenantmobilenumber=req.body.tenantmobilenumber || fileddata.tenantmobilenumber;
-             
+             fileddata.tenantname = req.body.tenantname
+             if (req.body.tenantaadharnumber)
+                    fileddata.tenantaadharnumber = req.body.tenantaadharnumber;
+                else
+                    fileddata.tenantaadharnumber = null;
+                fileddata.tenantmobilenumber = req.body.tenantmobilenumber;
+            if (fileddata.isrental == true) {
+               fileddata.isrental=true;
+            }
+            else{
+                fileddata.isrental=false;
             }
             if (req.body.hasOwnProperty('isactive') && req.body.isactive == false) {
                 fileddata.isactive = false;

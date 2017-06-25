@@ -11,6 +11,7 @@ var filedDatatroute = require('./filedDatatroute');
 var users = require('./users');
 var userroute=require('./userroute');
 var ward = require('./wardroute');
+var dailyCollectionroute = require('./dailyCollectionroute');
 var userprofile=require('./userprofileroute');
 var authentication = require('../oauth/authorize');
 var _ = require('lodash');
@@ -19,4 +20,5 @@ module.exports.configure = function (app) {
   app.use('/ward', ward);
   app.use('/user',[userroute,userprofile]);
   app.use('/users', users);
+  app.use('/dailycollecion',dailyCollectionroute);
 }

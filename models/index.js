@@ -9,7 +9,11 @@
 var crypto = require('crypto');
 module.exports.configure = function () {
     require('./fieldDatainfomodel');
+    require('./dailycollectionmodel');
+    require('./wardmodel');
+    
     var user = require('./usermodel');
+
     //seeding into database
 
     user.findOne({ 'username': 'blackroot@blackroot.in' }).then(function (users) {

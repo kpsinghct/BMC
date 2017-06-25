@@ -78,7 +78,7 @@ module.exports.post = function (req, res) {
             wardmodel.createAsync(req.body).then(function (ward) {
                 return res.json({
                     "statusCode": 201,
-                    "message": "ward was created successfully.",
+                    "message": "Project was created successfully.",
                     "data": ward
                 });
             }).catch(function (err) {
@@ -134,7 +134,7 @@ module.exports.put = function (req, res) {
                     ward.saveAsync().then(function (wrd) {
                         return res.json({
                             "statusCode": 200,
-                            "message": "user was updated sucessfully.",
+                            "message": "Project was updated sucessfully.",
                             "data": wrd
                         });
                     }).catch(function (err) {
@@ -158,7 +158,7 @@ module.exports.put = function (req, res) {
                 });
         }
         else {
-            res.status(409).json('Oops! Ward already exist.');
+            res.status(409).json('Oops! Project is already exist.');
 
         }
     }).catch(function (err) {
@@ -184,7 +184,7 @@ module.exports.deleted = function (req, res) {
         }
         return res.json({
             "statusCode": 204,
-            "message": "user was deleted successfully.",
+            "message": "Project was deleted successfully.",
             "data": ward
         });
     }).catch(function (err) {
