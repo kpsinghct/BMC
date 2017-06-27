@@ -11,6 +11,10 @@ var fileddatamodel = require('../models/fieldDatainfomodel');
 var error = require('../handler/error');
 var mongoose = require('mongoose');
 module.exports.get = function (req, res) {
+    console.log(req.options.where);
+    if(req.options.where && req.options.where.hasOwnProperty('fieldId.ward')){
+        req.options.where['fieldId.ward']=mongoose.Types.ObjectId(req.options.where['fieldId.ward']);
+    }
     dailycollectionmodel.find(req.options.where)
         .$where(req.options.search).countAsync().then(function (total) {
             dailycollectionmodel
