@@ -13,6 +13,7 @@ var dailycollectionmodel = new schema({
     fieldId:{type: schema.Types.ObjectId, ref: 'filedDatainfo'},
     eminumber: { type: Number, default: 1 },
     collectionamount: { type: Number},
+    wardId:{ type: String},//now ot become ProjectId
     createdby: { type: String, required: [true, 'createdby is required.'], default: 'SYSTEM' },
     createddate: { type: Date, default: Date.now },
     modifiedby: { type: String, required: [true, 'modifiedby is required.'] },

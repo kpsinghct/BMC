@@ -12,9 +12,7 @@ var error = require('../handler/error');
 var mongoose = require('mongoose');
 module.exports.get = function (req, res) {
     console.log(req.options.where);
-    if(req.options.where && req.options.where.hasOwnProperty('fieldId.ward')){
-        req.options.where['fieldId.ward']=mongoose.Types.ObjectId(req.options.where['fieldId.ward']);
-    }
+    
     dailycollectionmodel.find(req.options.where)
         .$where(req.options.search).countAsync().then(function (total) {
             dailycollectionmodel
@@ -144,6 +142,7 @@ module.exports.put = function (req, res) {
             collection.fieldId = req.body.fieldId || collection.fieldId;
             collection.eminumber = req.body.eminumber || collection.eminumber;
             collection.collectionamount = req.body.collectionamount || collection.collectionamount;
+            collection.wardId= req.body.wardId || collection.wardId;
             collection.modifiedby = req.body.modifiedby || collection.modifiedby;
             collection.modifieddate = new Date();
             collection.saveAsync().then(function (colletn) {
