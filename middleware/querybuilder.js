@@ -35,7 +35,10 @@ module.exports.queryBuilder = function (req, res, next) {
         req.options.select = req.query.select.replace(/,/g, ' ');
     }
     if (req.query.where) {
-        if (req.query.where == 'defaulter') {
+         if (req.query.where == 'today') {
+            req.options.where['createddate'] ={'$lte':new Date()} ;
+        }
+       else if (req.query.where == 'defaulter') {
             req.options.where['nextemiDate'] ={'$lte':new Date()} ;
         }
         else if (req.query.where == 'duplicateaadhar') {
@@ -89,17 +92,13 @@ module.exports.queryBuilder = function (req, res, next) {
 
     if (req.query.sort) {
         //remove comma with space
-        console.log('fuck');
         if (req.query.where != 'defaulter' && req.query.where != 'duplicateaadhar') {
             req.options.sort = req.query.sort.replace(/,/g, ' ');
-            console.log('NBC');
         }
         else {
-            console.log('fuck');
             delete req.options.sort;
             req.options.sort = {};
             req.options.sort = { '_id': 1 }
-            console.log('NBC',req.options.sort);
 
         }
 

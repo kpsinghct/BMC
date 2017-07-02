@@ -21,6 +21,7 @@ var fieldDatainfomodel = new schema({
     city: { type: String },
     pin: { type: String },
     principalamount: { type: Number, default: 0 },
+    grosstotal:{ type: Number, default: 0 },
     isemi: { type: Boolean, default: true },
     emitype: { type: String },
     downpayment: { type: Number, default: 0 },
