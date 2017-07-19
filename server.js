@@ -52,7 +52,12 @@ app.use(function (err, req, res, next) {
   res.render('error');
 });
 
-app.listen(6001, function () {
-  console.log("App Listening  on ", 6001);
-});
+// app.listen(6001, function () {
+//   console.log("App Listening  on ", 6001);
+// });
+// Initialize the app.
+  var server = app.listen(process.env.PORT || 8080, function () {
+    var port = server.address().port;
+    console.log("App now running on port", port);
+  });
 module.exports = app;
