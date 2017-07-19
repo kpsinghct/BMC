@@ -5,5 +5,5 @@
 *@copyright KP Singh Chundawat
 */
 module.exports={
-    dburi:'mongodb://ds113063.mlab.com:13063/heroku_058ngf03'
+    dburi:'mongodb://kp:123@ds113063.mlab.com:13063/heroku_058ngf03'
 }
