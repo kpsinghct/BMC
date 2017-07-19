@@ -12,11 +12,11 @@ mongoose.Promise = require('bluebird');
 module.exports = function () {
     console.log('inside the mongoose js');
     console.log('mydburi is', config.dburi);
-    var db = mongoose.connect(config.dburi);
+    var db = mongoose.connect(process.env.MONGODB_URI);
 
     // When successfully connected
     mongoose.connection.on('connected', function () {
-        console.log('Mongoose default connection open to ' + config.dburi);
+        console.log('Mongoose default connection open to ' + process.env.MONGODB_URI);
     });
 
     // If the connection throws an error
