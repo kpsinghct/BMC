@@ -5,5 +5,5 @@
 *@copyright KP Singh Chundawat
 */
 module.exports={
-    dburi:'mongodb://127.0.0.1:27017/fielddatadb'
+    dburi:'mongodb://ds113063.mlab.com:13063/heroku_058ngf03'
 }
